@@ -39,9 +39,8 @@ private:
 class ConvNetBlock
 {
 public:
-  ConvNetBlock() {};
-  void set_weights_(const int in_channels, const int out_channels, const int _dilation, const bool batchnorm,
-                    const std::string activation, std::vector<float>::iterator& weights);
+  ConvNetBlock(const int in_channels, const int out_channels, const int _dilation, const bool batchnorm,
+               const std::string& activation, std::vector<float>::iterator& weights);
   void process_(const Eigen::MatrixXf& input, Eigen::MatrixXf& output, const long i_start, const long i_end) const;
   long get_out_channels() const;
   Conv1D conv;
@@ -49,7 +48,7 @@ public:
 private:
   BatchNorm batchnorm;
   bool _batchnorm = false;
-  activations::Activation* activation = nullptr;
+  std::unique_ptr<activations::Activation> _activation;
 };
 
 class _Head
@@ -67,7 +66,7 @@ private:
 class ConvNet : public Buffer
 {
 public:
-  ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm, const std::string activation,
+  ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm, const std::string& activation,
           std::vector<float>& weights, const double expected_sample_rate = -1.0);
   ~ConvNet() = default;
 

@@ -9,24 +9,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Use libc++ on macOS, system default on Linux
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	include_directories(SYSTEM /usr/local/include)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	link_libraries(stdc++fs)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
-else()
-	message(FATAL_ERROR "Unrecognized Platform!")
-endif()
-
 set(NAM_DEPS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies")
 
+add_subdirectory(Dependencies)
+add_subdirectory(NAM)
 add_subdirectory(tools)
+
 
 #file(MAKE_DIRECTORY build/tools)
 

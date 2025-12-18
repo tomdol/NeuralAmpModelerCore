@@ -47,16 +47,16 @@ void nam::convnet::BatchNorm::process_(Eigen::MatrixXf& x, const long i_start, c
   }
 }
 
-void nam::convnet::ConvNetBlock::set_weights_(const int in_channels, const int out_channels, const int _dilation,
-                                              const bool batchnorm, const std::string activation,
-                                              std::vector<float>::iterator& weights)
+nam::convnet::ConvNetBlock::ConvNetBlock(const int in_channels, const int out_channels, const int _dilation,
+                                         const bool batchnorm, const std::string& activation,
+                                         std::vector<float>::iterator& weights)
+: _activation{activations::make_activation(activation)}
 {
   this->_batchnorm = batchnorm;
   // HACK 2 kernel
   this->conv.set_size_and_weights_(in_channels, out_channels, 2, _dilation, !batchnorm, weights);
   if (this->_batchnorm)
     this->batchnorm = BatchNorm(out_channels, weights);
-  this->activation = activations::Activation::get_activation(activation);
 }
 
 void nam::convnet::ConvNetBlock::process_(const Eigen::MatrixXf& input, Eigen::MatrixXf& output, const long i_start,
@@ -67,7 +67,7 @@ void nam::convnet::ConvNetBlock::process_(const Eigen::MatrixXf& input, Eigen::M
   if (this->_batchnorm)
     this->batchnorm.process_(output, i_start, i_end);
 
-  this->activation->apply(output.middleCols(i_start, ncols));
+  _activation->apply(output.middleCols(i_start, ncols));
 }
 
 long nam::convnet::ConvNetBlock::get_out_channels() const
@@ -93,15 +93,15 @@ void nam::convnet::_Head::process_(const Eigen::MatrixXf& input, Eigen::VectorXf
 }
 
 nam::convnet::ConvNet::ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm,
-                               const std::string activation, std::vector<float>& weights,
+                               const std::string& activation, std::vector<float>& weights,
                                const double expected_sample_rate)
 : Buffer(*std::max_element(dilations.begin(), dilations.end()), expected_sample_rate)
 {
   this->_verify_weights(channels, dilations, batchnorm, weights.size());
-  this->_blocks.resize(dilations.size());
+  this->_blocks.reserve(dilations.size());
   std::vector<float>::iterator it = weights.begin();
   for (size_t i = 0; i < dilations.size(); i++)
-    this->_blocks[i].set_weights_(i == 0 ? 1 : channels, channels, dilations[i], batchnorm, activation, it);
+    this->_blocks.emplace_back(i == 0 ? 1 : channels, channels, dilations[i], batchnorm, activation, it);
   this->_block_vals.resize(this->_blocks.size() + 1);
   for (auto& matrix : this->_block_vals)
     matrix.setZero();

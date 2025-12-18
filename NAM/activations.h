@@ -1,7 +1,9 @@
 #pragma once
 
-#include <string>
 #include <cmath> // expf
+#include <memory>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Eigen/Dense>
 
@@ -52,13 +54,10 @@ class Activation
 public:
   Activation() = default;
   virtual ~Activation() = default;
-  virtual void apply(Eigen::MatrixXf& matrix) { apply(matrix.data(), matrix.rows() * matrix.cols()); }
-  virtual void apply(Eigen::Block<Eigen::MatrixXf> block) { apply(block.data(), block.rows() * block.cols()); }
-  virtual void apply(Eigen::Block<Eigen::MatrixXf, -1, -1, true> block)
-  {
-    apply(block.data(), block.rows() * block.cols());
-  }
-  virtual void apply(float* data, long size) {}
+  virtual void apply(Eigen::MatrixXf& matrix) const { apply(matrix.data(), matrix.rows() * matrix.cols()); }
+  virtual void apply(Eigen::Block<Eigen::MatrixXf> block) const { apply(block.data(), block.rows() * block.cols()); }
+  virtual void apply(Eigen::Block<Eigen::MatrixXf, -1, -1, true> block) const;
+  virtual void apply(float* data, long size) const;
 
   static Activation* get_activation(const std::string name);
   static void enable_fast_tanh();
@@ -72,7 +71,7 @@ protected:
 class ActivationTanh : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -84,7 +83,7 @@ public:
 class ActivationHardTanh : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -96,7 +95,7 @@ public:
 class ActivationFastTanh : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -108,7 +107,7 @@ public:
 class ActivationReLU : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -120,7 +119,7 @@ public:
 class ActivationLeakyReLU : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -132,7 +131,7 @@ public:
 class ActivationSigmoid : public Activation
 {
 public:
-  void apply(float* data, long size) override
+  void apply(float* data, long size) const override
   {
     for (long pos = 0; pos < size; pos++)
     {
@@ -140,5 +139,8 @@ public:
     }
   }
 };
+
+std::unique_ptr<Activation> make_activation(std::string_view activation_name);
+
 }; // namespace activations
 }; // namespace nam
