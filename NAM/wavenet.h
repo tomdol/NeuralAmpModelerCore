@@ -24,11 +24,12 @@ class _Layer
 {
 public:
   _Layer(const int condition_size, const int channels, const int kernel_size, const int dilation,
-         const std::string activation, const bool gated)
+         const std::string& activation, const bool gated)
   : _conv(channels, gated ? 2 * channels : channels, kernel_size, true, dilation)
   , _input_mixin(condition_size, gated ? 2 * channels : channels, false)
   , _1x1(channels, channels, true)
-  , _activation(activations::Activation::get_activation(activation))
+  , _activation(activations::make_activation(activation))
+  , _sigmoid(activations::make_activation("Sigmoid"))
   , _gated(gated) {};
   // Resize all arrays to be able to process `maxBufferSize` frames.
   void SetMaxBufferSize(const int maxBufferSize);
@@ -63,7 +64,8 @@ private:
   // The internal state
   Eigen::MatrixXf _z;
 
-  activations::Activation* _activation;
+  std::unique_ptr<activations::Activation> _activation;
+  std::unique_ptr<activations::Activation> _sigmoid;
   const bool _gated;
 };
 
@@ -71,7 +73,7 @@ class LayerArrayParams
 {
 public:
   LayerArrayParams(const int input_size_, const int condition_size_, const int head_size_, const int channels_,
-                   const int kernel_size_, const std::vector<int>&& dilations_, const std::string activation_,
+                   const int kernel_size_, const std::vector<int>&& dilations_, const std::string& activation_,
                    const bool gated_, const bool head_bias_)
   : input_size(input_size_)
   , condition_size(condition_size_)
@@ -101,7 +103,7 @@ class _LayerArray
 {
 public:
   _LayerArray(const int input_size, const int condition_size, const int head_size, const int channels,
-              const int kernel_size, const std::vector<int>& dilations, const std::string activation, const bool gated,
+              const int kernel_size, const std::vector<int>& dilations, const std::string& activation, const bool gated,
               const bool head_bias);
 
   void SetMaxBufferSize(const int maxBufferSize);
@@ -157,7 +159,7 @@ private:
 class _Head
 {
 public:
-  _Head(const int input_size, const int num_layers, const int channels, const std::string activation);
+  _Head(const int input_size, const int num_layers, const int channels, const std::string& activation);
   void Reset(const double sampleRate, const int maxBufferSize);
   void set_weights_(std::vector<float>::iterator& weights);
   // NOTE: the head transforms the provided input by applying a nonlinearity
@@ -169,7 +171,7 @@ private:
   int _channels;
   std::vector<Conv1x1> _layers;
   Conv1x1 _head;
-  activations::Activation* _activation;
+  std::unique_ptr<activations::Activation> _activation;
 
   // Stores the outputs of the convs *except* the last one, which goes in
   // The array `outputs` provided to .process_()

@@ -52,7 +52,7 @@ void nam::wavenet::_Layer::process_(const Eigen::MatrixXf& input, const Eigen::M
     for (int i = 0; i < num_frames; i++)
     {
       this->_activation->apply(this->_z.block(0, i, channels, 1));
-      activations::Activation::get_activation("Sigmoid")->apply(this->_z.block(channels, i, channels, 1));
+      _sigmoid->apply(this->_z.block(channels, i, channels, 1));
     }
     this->_z.block(0, 0, channels, num_frames).array() *= this->_z.block(channels, 0, channels, num_frames).array();
   }
@@ -86,7 +86,7 @@ void nam::wavenet::_Layer::set_num_frames_(const long num_frames)
 
 nam::wavenet::_LayerArray::_LayerArray(const int input_size, const int condition_size, const int head_size,
                                        const int channels, const int kernel_size, const std::vector<int>& dilations,
-                                       const std::string activation, const bool gated, const bool head_bias)
+                                       const std::string& activation, const bool gated, const bool head_bias)
 : _rechannel(input_size, channels, false)
 , _head_rechannel(channels, head_size, head_bias)
 {
@@ -207,10 +207,10 @@ void nam::wavenet::_LayerArray::_rewind_buffers_()
 
 // Head =======================================================================
 
-nam::wavenet::_Head::_Head(const int input_size, const int num_layers, const int channels, const std::string activation)
+nam::wavenet::_Head::_Head(const int input_size, const int num_layers, const int channels, const std::string& activation)
 : _channels(channels)
 , _head(num_layers > 0 ? channels : input_size, 1, true)
-, _activation(activations::Activation::get_activation(activation))
+, _activation(activations::make_activation(activation))
 {
   assert(num_layers > 0);
   int dx = input_size;

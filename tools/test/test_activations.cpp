@@ -39,8 +39,8 @@ public:
   static void test_get_by_str()
   {
     const std::string name = "Fasttanh";
-    auto a = nam::activations::Activation::get_activation(name);
-    _test_class(a);
+    auto a = nam::activations::make_activation(name);
+    _test_class(a.get());
   }
 
 private:
@@ -92,8 +92,8 @@ public:
   static void test_get_by_str()
   {
     const std::string name = "LeakyReLU";
-    auto a = nam::activations::Activation::get_activation(name);
-    _test_class(a);
+    auto a = nam::activations::make_activation(name);
+    _test_class(a.get());
   }
 
 private:

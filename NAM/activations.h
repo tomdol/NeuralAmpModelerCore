@@ -59,7 +59,6 @@ public:
   virtual void apply(Eigen::Block<Eigen::MatrixXf, -1, -1, true> block) const;
   virtual void apply(float* data, long size) const;
 
-  static Activation* get_activation(const std::string name);
   static void enable_fast_tanh();
   static void disable_fast_tanh();
   static bool using_fast_tanh;
